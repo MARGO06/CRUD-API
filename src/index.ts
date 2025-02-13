@@ -74,6 +74,41 @@ const requestsPost = (req: http.IncomingMessage, res: http.ServerResponse) => {
   res.end(JSON.stringify({ message: 'URL does not exist' }))
 }
 
+const requestsPut = (userId: string | null, req: http.IncomingMessage, res: http.ServerResponse) => {
+  if (req.url && req.url === `/users?id=${userId}`) {
+    let body = ''
+    req.on('data', (chunk) => {
+      body += chunk.toString()
+    })
+    req.on('end', () => {
+      const indexUser = db.users.findIndex((item) => item.id === userId)
+      const newUser = JSON.parse(body)
+      if (userId === '') {
+        res.writeHead(400, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify({ message: 'Invalid user ID format. Must be a non-empty string.' }))
+        return
+      }
+
+      if (indexUser > -1) {
+        db.users[indexUser] = {
+          ...db.users[indexUser],
+          ...newUser,
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' })
+        res.end(JSON.stringify(db.users[indexUser]))
+        return
+      }
+      res.writeHead(404, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ message: 'User does not exist' }))
+      return
+    })
+  } else {
+    res.writeHead(404, { 'Content-Type': 'application/json' })
+    res.end(JSON.stringify({ message: 'URL does not exist' }))
+  }
+}
+
 const server = http.createServer((req, res) => {
   const url = new URL(`https://localhost:3000/${req.url}`)
   const userId = url.searchParams.get('id')
@@ -82,6 +117,8 @@ const server = http.createServer((req, res) => {
     requestsGet(userId, req, res)
   } else if (method === Method.Post) {
     requestsPost(req, res)
+  } else if (method === Method.Put) {
+    requestsPut(userId, req, res)
   }
 })
 
