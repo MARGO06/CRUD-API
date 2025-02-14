@@ -1,4 +1,5 @@
-const path = require('path')
+import path from 'node:path'
+import Dotenv from 'dotenv-webpack'
 
 module.exports = {
   mode: 'production',
@@ -7,6 +8,11 @@ module.exports = {
     filename: 'main.js',
     path: path.resolve(__dirname, 'dist'),
   },
+  plugins: [
+    new Dotenv({
+      path: './.env',
+    }),
+  ],
   module: {
     rules: [
       {
